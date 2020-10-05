@@ -1,0 +1,164 @@
+" bujo.vim - A minimalist todo list manager
+" Maintainer:   Eerik Saksi <eeriksak.si/>
+" Version:      0.1
+
+" Get custom configs
+let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
+let s:last_jumped_file = ""
+
+" Make bujo directory if it doesn't exist"
+if empty(glob(g:vim_marks_overhaul#marks_file_path))
+  call mkdir(g:vim_marks_overhaul#marks_file_path)
+endif
+
+" InGitRepository() tells us if the directory we are currently working in
+" is a git repository. It makes use of the 'git rev-parse --is-inside-work-tree'
+" command. This command outputs true to the shell if so, and a STDERR message 
+" otherwise.
+"
+" Used to 
+function s:InGitRepository()
+  :silent let bool = system("git rev-parse --is-inside-work-tree")
+
+  " The git function will return true with some leading characters
+  " if we are in a repository. So, we split off those characters
+  " and just check the first word.
+  if split(bool, '\v\n')[0] == 'true'
+    return 1
+  endif
+endfunction
+
+" GetToplevelFolder() gives us a clean name of the git repository that we are
+" currently working in
+function s:GetToplevelFolder()
+  let absolute_path = system("git rev-parse --show-toplevel")
+  let repo_name = split(absolute_path, "/")
+  let repo_name_clean = split(repo_name[-1], '\v\n')[0]
+  return repo_name_clean
+endfunction
+
+
+" GetMarksFilePath() returns which file path we will be using. If we are in a
+" git repository, we return the directory for that specific git repo.
+" Otherwise, we return the general file path. 
+"
+" If we are passed an argument, it means that the user wants to open the
+" general marks file, so we also return the general file path in that case
+function s:GetMarksFilePath()
+  let marksFile = g:vim_marks_overhaul#marks_file_path . "/global_marks"
+  if s:InGitRepository()
+    let repo_name = s:GetToplevelFolder()
+    let marksFile = g:vim_marks_overhaul#marks_file_path . "/" . repo_name 
+  endif
+  if !filereadable(marksFile)
+    " init empty marks file
+    let i = 0
+    let lines = []
+    while i < 79
+      let lines = add(lines, '')
+      let i += 1
+    endwhile
+    silent exec '!touch ' . marksFile
+    call writefile(lines, marksFile)
+  endif
+  return marksFile
+endfunction
+
+function! s:CustomJumpMark()
+  "if nerdtree open close so you don't open file in small nerd tree window
+  if exists("g:NERDTree") && g:NERDTree.IsOpen()
+    :NERDTreeToggle 
+  endif
+
+  let lines = readfile(s:GetMarksFilePath())
+
+  "get the filename of the current file
+  let fileName = ""
+  redir => fileName 
+    silent! echo expand('%:p')
+  redir end
+
+  let in = getchar()
+  "undo
+  if nr2char(in) == "\e"
+    return
+  endif
+  if 65 < in || in < 122 
+    let s:last_jumped_file = lines[in - 65][1:]
+    if (filereadable(lines[in - 65][1:]))
+      silent! exec 'find' . lines[in - 65][1:]
+    endif
+  endif
+endfunction
+
+
+function! s:CustomMark()
+  "in stores the mark we want to use
+  let filePath = ""
+  redir => filePath
+    silent! echo expand('%:p')
+  redir END
+
+  let lines = readfile(s:GetMarksFilePath())
+  echo g:vim_marks_overhaul#marks_file_path
+  let in = getchar()
+  if 65 < in || in < 122 
+    let lines = readfile(s:GetMarksFilePath())
+    if strlen(lines[in - 65]) != 0
+      echo lines[in - 65] . ' already occupies this mark. Override? (y/n)' 
+      let option = getchar()
+      if nr2char(option) == 'y'
+        let lines[in - 65] = filePath
+        call writefile(lines, s:GetMarksFilePath())
+      endif
+      return
+    endif
+
+    "find if this file is already refered to
+    let i = 0
+    while i < 57
+      if lines[i] == filePath 
+        echo nr2char(i + 65) . " already refers to this file. Override? (y/n)"
+        let option = getchar()
+        if nr2char(option) == 'y'
+          let lines[i] = ""
+        else
+          return
+        endif
+      endif
+      let i+=1
+    endwhile
+    let lines[in - 65] = filePath
+    call writefile(lines, s:GetMarksFilePath())
+  endif
+endfunction
+
+function! s:Remind_Mark()
+  let fileName = ""
+  redir => fileName
+    silent! echo expand('%:p')
+  redir END
+  if s:last_jumped_file != '' && fileName != s:last_jumped_file 
+    "this was not accessed with a mark jump
+    if filereadable(s:GetMarksFilePath())
+      let lines = readfile(s:GetMarksFilePath())
+      let i = 0
+      while i < 57
+        if lines[i] == fileName 
+          echo  "You can also access this file with the mark " . nr2char(i + 65)
+          return
+        endif
+        let i+= 1
+      endwhile
+    endif
+  endif
+endfunction
+
+if !exists(":OverhaulJump")
+  command -nargs=? OverhaulJump :call s:CustomJumpMark()
+endif
+if !exists(":OverhaulMark")
+  command -nargs=? OverhaulMark :call s:CustomMark()
+endif
+
+autocmd BufEnter * :call s:Remind_Mark()
