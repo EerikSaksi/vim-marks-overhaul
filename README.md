@@ -3,21 +3,27 @@
 This overrides and extends on some of vim's mark features.
 
 - All marks are global
-  This includes lower case marks. The location of marks in files is not saved, so you will instead jump to where you were editing most recently.
+
+This includes lower case marks. The location of marks in files is not saved, so you will instead jump to where you were editing most recently.
 
 - Different marks for different projects
+
   If you're not inside a git project, the global marks are used. Otherwise, project specific marks are used automatically.
 
 - Warns when overriding marks
+
   If you try to assign a mark to a file that is already used, a warning prompt will appear.
 
 - Warns when double referencing file
+
   If you have already assigned a mark to the current file, a warning will appear, and proceeding erases the old mark.
 
 - Reminders for marks
+
   If you access a file that has been marked through other means (such as through NERDTree) an echo will execute reminding you of the mark that was assigned to this file.
 
 - Support for NERDTree
+
   Executing a jump will first close NERDTree (if plugin exists) to avoid opening the buffer in the small left side window.
 
 
