@@ -1,7 +1,6 @@
                   
-                                             *bujo.txt*
-                        Bujo~
-             Bullet Journal Vim Plugin~
+                                             *vim_marks_overhaul.txt*
+                        VimMarksOverhaul~
 
 Author: Eerik Saksi <eeriksak.si>
 Template for code: Jersey Fonseca <jerseyfonseca@gmail.com>
@@ -13,54 +12,45 @@ Version: 0.5
 3. FAQ
 
 =======================================================
-                                        *bujo-overview*
+                                        *vim_marks_overhaul-overview*
 1. Overview~
+This overrides and extends on some of vim's mark features.
 
-This plugin allows people to easily access and
-manage todo lists for their projects.
+- All marks are global
+  This includes lower case marks. The location of marks in files is not saved, so you will instead jump to where you were editing most recently.
 
-You can access Todo lists of specific projects just
-by being inside of that git repo. In addition, you
-can access a general todo list from any folder.
+- Different marks for different projects
+  If you're not inside a git project, the global marks are used. Otherwise, project specific marks are used automatically.
 
-You can find stable versions of this plugin at: 
+- Warns when overriding marks
+  If you try to assign a mark to a file that is already used, a warning prompt will appear.
 
-https://github.com/jfonseca8/vim-bujo
+- Warns when double referencing file
+  If you have already assigned a mark to the current file, a warning will appear, and proceeding erases the old mark.
 
-Feedback and bug reports are welcomed and encouraged.
-If you want new features, please do let me know. I
-would be honored at the opportunity to make a tool
-better.
+- Reminders for marks
+  If you access a file that has been marked through other means (such as through NERDTree) an echo will execute reminding you of the mark that was assigned to this file.
 
-I built this because I wanted the ease of vim bindings
-with the benefits of keeping a todo list on hand. It is
-very simple and minimialist.
+- Support for NERDTree
+  Executing a jump will first close NERDTree (if plugin exists) to avoid opening the buffer in the small left side window.
 
 =======================================================
-                                        *bujo-features*
+                                        *vim_marks_overhaul-features*
 2. Features~
   
-  * Open project specific todo:
-    :Todo     // from inside project
-  * Open general todo:
-    :Todo g
-  * Use mods
-    :<mods> Todo
-  * Insert a new task:
-    nmap <C-S> <Plug>BujoAddTodoNormal
-    imap <C-S> <Plug>BujoAddTodoInsert
-  * Check off a task:
-    nmap <C-Q> <Plug>BujoChecknormal
-    imap <C-Q> <Plug>BujoCheckinsert
-  * Change cache directory:
-    let g:bujo#todo_file_path = $HOME . "/.cache/bujo"
-  * Change window open width:
-    let g:bujo#window_width = 40
 
+- Override default vim marks
+
+  
+  * change default bindings 
+      nnoremap <silent> ' :OverhaulJump <CR>
+      nnoremap <silent> m :OverhaulMark<CR>
+  
+  * Change cache directory:
+    let g:vim_marks_overhaul#marks_file_path = $HOME ".cache/vim-marks-overhault"
 
 =======================================================
-                                           *bujo-notes*
+                                           *vim_marks_overhaul-notes*
 3. Notes
 
-Please always feel free to do make recommendations and
-join me!
+Please always feel free to do make recommendations! 

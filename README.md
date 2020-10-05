@@ -1,8 +1,25 @@
-# vim-bujo
+# vim-marks-overhaul
 
-This plugin allows people to easily access and manage todo lists for their projects from vim.
+This overrides and extends on some of vim's mark features.
 
-You can easily access and manage Todo lists of specific projects or a general Todo list.
+- All marks are global
+  This includes lower case marks. The location of marks in files is not saved, so you will instead jump to where you were editing most recently.
+
+- Different marks for different projects
+  If you're not inside a git project, the global marks are used. Otherwise, project specific marks are used automatically.
+
+- Warns when overriding marks
+  If you try to assign a mark to a file that is already used, a warning prompt will appear.
+
+- Warns when double referencing file
+  If you have already assigned a mark to the current file, a warning will appear, and proceeding erases the old mark.
+
+- Reminders for marks
+  If you access a file that has been marked through other means (such as through NERDTree) an echo will execute reminding you of the mark that was assigned to this file.
+
+- Support for NERDTree
+  Executing a jump will first close NERDTree (if plugin exists) to avoid opening the buffer in the small left side window.
+
 
 ## Installation
 
@@ -11,84 +28,32 @@ If you use a plugin manager, such as [vim-plug], follow its instructions on how 
 To install the stable version of the plugin, if using [vim-plug], put this in your `vimrc`/`init.vim`:
 
 ```
-Plug 'vuciv/vim-bujo'
+Plug 'eeriksaksi/vim-marks-overhaul'
 ```
-
-
 
 ## Use / Mappings
 
-* Open Todo of current git repo:
-  ```
-  :Todo // from git repo
-  ```
-* Open general Todo:
-  ```
-  :Todo g
-  ```
-  
-* Using mods:
-  ```
-  :botright Todo
-  :botright Todo g
-  ```
-__You can see more mod commands at [:h mods]__
+- Override default vim marks
 
-* Insert a new task:
   ```
-  nmap <C-S> <Plug>BujoAddnormal
-  imap <C-S> <Plug>BujoAddinsert
-  ```
-* Check off a task:
-  ```
-  nmap <C-Q> <Plug>BujoChecknormal
-  imap <C-Q> <Plug>BujoCheckinsert
-  ```
-  
-* Change cache directory:
-  ```
-  let g:bujo#todo_file_path = $HOME . "/.cache/bujo"
+  nnoremap <silent> ' :OverhaulJump <CR>
+  nnoremap <silent> m :OverhaulMark<CR>
   ```
 
-* Change todo window width:
+- Change cache directory:
   ```
-  let g:bujo#window_width = 40
+  let g:vim_marks_overhaul#marks_file_path = $HOME ".cache/vim-marks-overhault"
   ```
 
-## Screenshots
 
-This gif shows how the Todo list opens up in vim.
+# vim-marks-overhaul
+This is my first vim plugin so I really don't know what I'm doing, so any constructive criticism or feature suggestions are welcome.
+I copied the basic structure from vim-bujo, as it used similar logic (todo list for git repo vs marks file.)
 
-![Gif of Bujo use](https://raw.githubusercontent.com/jfonseca8/vim-bujo/master/screenshots/bujo.gif)
-
-We can also see that the task list is very easy to manage.
-
-The ascii art is inserted manually, but you can do that yourself with the file 'templates/md.skeleton'
-
-
-## Notes
-
-Feedback and bug reports are welcomed and encouraged.
-If you want new features, please do let me know. I
-would be honored at the opportunity to make a tool
-better for the community.
-
-I built this because I wanted the ease of vim bindings
-with the benefits of keeping a todo list on hand. It is
-very simple and minimialist. 
-
-I plan to add diary capabilities, and all the fun little 
-quotes and activities that make actual bullet journaling fun!
-
-If you would like to work on this project with me, please
-reach out to me on [twitter]
-
-
-[twitter]: https://twitter.com/FonsecaJersey
 [vim-plug]: https://github.com/junegunn/vim-plug
 [:h mods]: https://vimhelp.org/map.txt.html#%3Cmods%3E
 
 ## License
 
-Copyright (c) Jersey Fonseca.  Distributed under the same terms as Vim itself.
+Copyright (c) Eerik Saksi. Distributed under the same terms as Vim itself.
 See `:help license`.
