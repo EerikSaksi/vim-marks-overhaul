@@ -4,11 +4,18 @@
 
 " Get custom configs
 let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
+let g:vim_marks_overhaul#use_globals = get(g:, "vim_marks_overhaul#use_globals", 1)
 let s:last_jumped_file = ""
+
+
 
 " Make bujo directory if it doesn't exist"
 if empty(glob(g:vim_marks_overhaul#marks_file_path))
   call mkdir(g:vim_marks_overhaul#marks_file_path)
+endif
+
+if !g:vim_marks_overhaul#use_globals && !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
+  silent exec '!touch ' . g:vim_marks_overhaul#marks_file_path . '/last_used'
 endif
 
 " InGitRepository() tells us if the directory we are currently working in
@@ -34,6 +41,11 @@ function s:GetToplevelFolder()
   let absolute_path = system("git rev-parse --show-toplevel")
   let repo_name = split(absolute_path, "/")
   let repo_name_clean = split(repo_name[-1], '\v\n')[0]
+
+  "if not using globals write the last used mark file
+  if !g:vim_marks_overhaul#use_globals
+    call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . '/last_used')
+  endif
   return repo_name_clean
 endfunction
 
@@ -45,10 +57,19 @@ endfunction
 " If we are passed an argument, it means that the user wants to open the
 " general marks file, so we also return the general file path in that case
 function s:GetMarksFilePath()
-  let marksFile = g:vim_marks_overhaul#marks_file_path . "/global_marks"
+  "use git repo marks
   if s:InGitRepository()
     let repo_name = s:GetToplevelFolder()
     let marksFile = g:vim_marks_overhaul#marks_file_path . "/" . repo_name 
+  else 
+    "otherwise use globals 
+    if g:vim_marks_overhaul#use_globals
+      let marksFile = g:vim_marks_overhaul#marks_file_path . "/global_marks"
+    "if don't use globals then  
+    else
+      let gitRepo = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
+      let marksFile = g:vim_marks_overhaul#marks_file_path . '/' . gitRepo
+    endif
   endif
   if !filereadable(marksFile)
     " init empty marks file
@@ -100,7 +121,6 @@ function! s:CustomMark()
   redir END
 
   let lines = readfile(s:GetMarksFilePath())
-  echo g:vim_marks_overhaul#marks_file_path
   let in = getchar()
   if 65 < in || in < 122 
     let lines = readfile(s:GetMarksFilePath())
@@ -160,5 +180,4 @@ endif
 if !exists(":OverhaulMark")
   command -nargs=? OverhaulMark :call s:CustomMark()
 endif
-
 autocmd BufEnter * :call s:Remind_Mark()

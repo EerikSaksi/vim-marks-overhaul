@@ -4,7 +4,7 @@ This overrides and extends on some of vim's mark features.
 
 - All marks are global
 
-This includes lower case marks. The location of marks in files is not saved, so you will instead jump to where you were editing most recently.
+  This includes lower case marks. The location of marks in files is not saved, so you will instead jump to where you were editing most recently.
 
 - Different marks for different projects
 
@@ -43,7 +43,12 @@ Plug 'eeriksaksi/vim-marks-overhaul'
 
   ```
   nnoremap <silent> ' :OverhaulJump <CR>
-  nnoremap <silent> m :OverhaulMark<CR>
+  nnoremap <silent> m :OverhaulMark <CR>
+  ```
+
+- Use the last git repos mark files when launching instead of globals (if you worked on git project bogosort when last using vim, bogosorts marks will be used even outside of the project until you enter another git project)
+  ```
+  let g:vim_marks_overhaul#use_globals = 0
   ```
 
 - Change cache directory:
