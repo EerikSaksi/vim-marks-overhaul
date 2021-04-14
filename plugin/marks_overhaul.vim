@@ -1,18 +1,16 @@
-" bujo.vim - A minimalist todo list manager
-" Maintainer:   Eerik Saksi <eeriksak.si/>
-" Version:      0.1
+" Vim Marks overhaul
+" Maintainer:   Eerik Saksi 
+" Version:      0.2
 
 " Get custom configs
 let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
-let s:last_jumped_file = ""
 
-
-
-" Make vim marks directory if it doesn't exist"
+" Make vim marks directory if it doesn't exist
 if empty(glob(g:vim_marks_overhaul#marks_file_path))
   call mkdir(g:vim_marks_overhaul#marks_file_path)
 endif
 
+"save last used git repo
 if !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
   silent exec '!touch ' . g:vim_marks_overhaul#marks_file_path . '/last_used'
 endif
@@ -29,7 +27,7 @@ function s:InGitRepository()
   " if we are in a repository. So, we split off those characters
   " and just check the first word.
   if split(bool, '\v\n')[0] == 'true'
-    return 1
+   return 1
   endif
 endfunction
 
@@ -54,14 +52,11 @@ function s:GetMarksFilePath()
   "use git repo marks
   if s:InGitRepository()
     let repo_name = s:GetToplevelFolder()
-    let marksFile = g:vim_marks_overhaul#marks_file_path . "/" . repo_name 
-    else
-      let gitRepo = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
-      let marksDir = g:vim_marks_overhaul#marks_file_path . '/' . gitRepo
-    endif
+  else
+    let repo_name = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
   endif
-
-  if !filereadable(marksFile)
+  let marksDir = g:vim_marks_overhaul#marks_file_path . '/' . repo_name
+  if !isdirectory(marksDir)
     " init empty marks file
     let i = 0
     let lines = []
@@ -69,81 +64,71 @@ function s:GetMarksFilePath()
       let lines = add(lines, '')
       let i += 1
     endwhile
-    silent exec '!touch ' . marksFile
-    call writefile(lines, marksFile)
+    silent exec '!mkdir ' . marksDir
   endif
-  return marksFile
+  return marksDir
 endfunction
 
 function! s:CustomJumpMark()
-  "if nerdtree open close so you don't open file in small nerd tree window
+  "if nerdtree open close it so you don't open file in small nerd tree window
   if exists("g:NERDTree") && g:NERDTree.IsOpen()
     :NERDTreeToggle 
   endif
-
-
-  "get the filename of the current file
-  let fileName = ""
-  redir => fileName 
-    silent! echo expand('%:p')
-  redir end
 
   let in = getchar()
   "undo
   if nr2char(in) == "\e"
     return
   endif
+
   if 97 <= in && in <= 122 
-    let lines = readfile(s:GetMarksFilePath()) + nr2char(in)
-    if (filereadable(lines[in - 65][1:]))
-      silent! exec 'find' . lines[in - 65][1:]
+    "first we find the jump file which was requested
+    let requestedFile = s:GetMarksFilePath() . '/' . nr2char(in)
+    if (filereadable(requestedFile))
+      "if exists return the file inside this requested directory
+      let in = getchar()
+      if nr2char(in) == "\e"
+        return
+      endif
+      let lines = readfile(requestedFile)
+      silent exec 'find ' . lines[in - 97][1:]
     endif
   endif
 endfunction
 
 
 function! s:CustomMark()
-  "in stores the mark we want to use
-  let filePath = ""
-  redir => filePath
-    silent! echo expand('%:p')
-  redir END
-
-  let lines = readfile(s:GetMarksFilePath())
+  "get current directory
+  let pwd = getcwd()
   let in = getchar()
-  if 65 < in || in < 122 
-    let lines = readfile(s:GetMarksFilePath())
-    if strlen(lines[in - 65]) != 0
-      echo lines[in - 65] . ' already occupies this mark. Override? (y/n)' 
-      let option = getchar()
-      if nr2char(option) == 'y'
-        let lines[in - 65] = filePath
-        call writefile(lines, s:GetMarksFilePath())
-      endif
+  if 97 <= in && in <= 122 
+    let path = s:GetMarksFilePath() . "/" . nr2char(in)
+    if filereadable(path)
+      echo "Directory already marked with " . nr2char(in)
       return
     endif
-
-    "find if this file is already refered to
+    silent exec '!touch ' . path
     let i = 0
-    while i < 57
-      if lines[i] == filePath 
-        echo nr2char(i + 65) . " already refers to this file. Override? (y/n)"
-        let option = getchar()
-        if nr2char(option) == 'y'
-          let lines[i] = ""
-        else
-          return
-        endif
-      endif
-      let i+=1
+
+    let lines = []
+    while i < 26
+      let lines = add(lines, '')
+      let i += 1
     endwhile
+
+    let files = ""
+    redir => files
+      :ls
+    redir end
+    echo files
+
     let lines[in - 65] = filePath
     call writefile(lines, s:GetMarksFilePath())
   endif
 endfunction
 
 if !exists(":OverhaulJump")
-  command -nargs=? OverhaulJump :call s:CustomJumpMark()
+ command -nargs=? OverhaulJump :call s:CustomJumpMark()
 endif
 if !exists(":OverhaulMark")
   command -nargs=? OverhaulMark :call s:CustomMark()
