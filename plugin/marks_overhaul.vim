@@ -85,17 +85,60 @@ function! s:CustomJumpMark()
     "first we find the jump file which was requested
     let requestedFile = s:GetMarksFilePath() . '/' . nr2char(in)
     if (filereadable(requestedFile))
-      "if exists return the file inside this requested directory
+      let lines = readfile(requestedFile)
+      let i = 0
+      while i < len(lines) && len(lines[i])
+        echo nr2char(i + 97) . ' ' . lines[i]
+        let i += 1
+      endwhile
       let in = getchar()
+
       if nr2char(in) == "\e"
         return
       endif
-      let lines = readfile(requestedFile)
-      silent exec 'find ' . lines[in - 97][1:]
+      silent exec 'find ' .  lines[26] . lines[in - 97]
+
+      
+      "make sure that all files in directory actually saved
+      let files = s:GetFileList()
+
+      for dirFile in files
+        let notFound = 1
+        for savedFile in lines
+          if dirFile == savedFile 
+            let notFound = 0
+            echo dirFile . " " . savedFile
+            break
+          endif
+        endfor
+        if notFound 
+          let lines[i] = dirFile
+          let i+=1
+        endif
+      endfor
+      redraw
     endif
   endif
 endfunction
 
+
+function! s:GetFileList()
+  let files = []
+  redir => files
+    :silent echo globpath('.', '*')
+  redir end
+  let files = split(files, '\n')
+  let i = 0
+  while i < len(files) 
+    if isdirectory(files[i])
+      call remove(files, i)
+    else
+      let files[i] = files[i][2:]
+      let i += 1
+    endif
+  endwhile
+  return files
+endfunction
 
 function! s:CustomMark()
   "get current directory
@@ -108,22 +151,15 @@ function! s:CustomMark()
       return
     endif
     silent exec '!touch ' . path
-    let i = 0
 
-    let lines = []
-    while i < 26
-      let lines = add(lines, '')
-      let i += 1
+    let files = s:GetFileList()
+    while len(files) < 26
+      call add(files, '')
     endwhile
 
-    let files = ""
-    redir => files
-      :ls
-    redir end
-    echo files
-
-    let lines[in - 65] = filePath
-    call writefile(lines, s:GetMarksFilePath())
+    "append cwd in the bottom to allow absolute jumps
+    call add(files, getcwd() . '/')
+    call writefile(files, path)
   endif
 endfunction
 
