@@ -4,17 +4,16 @@
 
 " Get custom configs
 let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
-let g:vim_marks_overhaul#use_globals = get(g:, "vim_marks_overhaul#use_globals", 1)
 let s:last_jumped_file = ""
 
 
 
-" Make bujo directory if it doesn't exist"
+" Make vim marks directory if it doesn't exist"
 if empty(glob(g:vim_marks_overhaul#marks_file_path))
   call mkdir(g:vim_marks_overhaul#marks_file_path)
 endif
 
-if !g:vim_marks_overhaul#use_globals && !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
+if !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
   silent exec '!touch ' . g:vim_marks_overhaul#marks_file_path . '/last_used'
 endif
 
@@ -23,7 +22,6 @@ endif
 " command. This command outputs true to the shell if so, and a STDERR message 
 " otherwise.
 "
-" Used to 
 function s:InGitRepository()
   :silent let bool = system("git rev-parse --is-inside-work-tree")
 
@@ -41,11 +39,7 @@ function s:GetToplevelFolder()
   let absolute_path = system("git rev-parse --show-toplevel")
   let repo_name = split(absolute_path, "/")
   let repo_name_clean = split(repo_name[-1], '\v\n')[0]
-
-  "if not using globals write the last used mark file
-  if !g:vim_marks_overhaul#use_globals
-    call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . '/last_used')
-  endif
+  call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . '/last_used')
   return repo_name_clean
 endfunction
 
@@ -61,21 +55,17 @@ function s:GetMarksFilePath()
   if s:InGitRepository()
     let repo_name = s:GetToplevelFolder()
     let marksFile = g:vim_marks_overhaul#marks_file_path . "/" . repo_name 
-  else 
-    "otherwise use globals 
-    if g:vim_marks_overhaul#use_globals
-      let marksFile = g:vim_marks_overhaul#marks_file_path . "/global_marks"
-    "if don't use globals then  
     else
       let gitRepo = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
-      let marksFile = g:vim_marks_overhaul#marks_file_path . '/' . gitRepo
+      let marksDir = g:vim_marks_overhaul#marks_file_path . '/' . gitRepo
     endif
   endif
+
   if !filereadable(marksFile)
     " init empty marks file
     let i = 0
     let lines = []
-    while i < 79
+    while i < 26
       let lines = add(lines, '')
       let i += 1
     endwhile
@@ -91,7 +81,6 @@ function! s:CustomJumpMark()
     :NERDTreeToggle 
   endif
 
-  let lines = readfile(s:GetMarksFilePath())
 
   "get the filename of the current file
   let fileName = ""
@@ -104,8 +93,8 @@ function! s:CustomJumpMark()
   if nr2char(in) == "\e"
     return
   endif
-  if 65 < in || in < 122 
-    let s:last_jumped_file = lines[in - 65][1:]
+  if 97 <= in && in <= 122 
+    let lines = readfile(s:GetMarksFilePath()) + nr2char(in)
     if (filereadable(lines[in - 65][1:]))
       silent! exec 'find' . lines[in - 65][1:]
     endif
@@ -153,31 +142,9 @@ function! s:CustomMark()
   endif
 endfunction
 
-function! s:Remind_Mark()
-  let fileName = ""
-  redir => fileName
-    silent! echo expand('%:p')
-  redir END
-  if s:last_jumped_file != '' && fileName != s:last_jumped_file 
-    "this was not accessed with a mark jump
-    if filereadable(s:GetMarksFilePath())
-      let lines = readfile(s:GetMarksFilePath())
-      let i = 0
-      while i < 57
-        if lines[i] == fileName 
-          echo  "You can also access this file with the mark " . nr2char(i + 65)
-          return
-        endif
-        let i+= 1
-      endwhile
-    endif
-  endif
-endfunction
-
 if !exists(":OverhaulJump")
   command -nargs=? OverhaulJump :call s:CustomJumpMark()
 endif
 if !exists(":OverhaulMark")
   command -nargs=? OverhaulMark :call s:CustomMark()
 endif
-autocmd BufEnter * :call s:Remind_Mark()
