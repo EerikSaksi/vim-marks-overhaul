@@ -147,8 +147,12 @@ function! s:CustomMark()
   if 97 <= in && in <= 122 
     let path = s:GetMarksFilePath() . "/" . nr2char(in)
     if filereadable(path)
-      echo "Directory already marked with " . nr2char(in)
-      return
+      echo "Some directory already marked with " . nr2char(in) . ". Override (y/n)?"
+      let yesno = getchar()
+      if yesno != 121
+        return
+      endif
+      silent exec '!rm ' . path
     endif
     silent exec '!touch ' . path
 
