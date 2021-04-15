@@ -58,15 +58,25 @@ function s:GetMarksFilePath()
   let marksDir = g:vim_marks_overhaul#marks_file_path . '/' . repo_name
   if !isdirectory(marksDir)
     " init empty marks file
+    silent exec '!mkdir ' . marksDir
     let i = 0
     let lines = []
     while i < 26
       let lines = add(lines, '')
       let i += 1
     endwhile
-    silent exec '!mkdir ' . marksDir
+    call writefile(lines, marksDir . '/vim_marks_overhaul_root_paths')
   endif
   return marksDir
+endfunction
+
+function! s:EscapableIn()
+  let in = getchar()
+  "undo
+  if nr2char(in) == "\e"
+    return
+  endif
+  return in
 endfunction
 
 function! s:CustomJumpMark()
@@ -74,40 +84,30 @@ function! s:CustomJumpMark()
   if exists("g:NERDTree") && g:NERDTree.IsOpen()
     :NERDTreeToggle 
   endif
-
-  let in = getchar()
-  "undo
-  if nr2char(in) == "\e"
-    return
-  endif
-
+  let in = s:EscapableIn()
   if 97 <= in && in <= 122 
     "first we find the jump file which was requested
-    let requestedFile = s:GetMarksFilePath() . '/' . nr2char(in)
-    if (filereadable(requestedFile))
-      let lines = readfile(requestedFile)
+    let rootPathFiles = s:GetMarksFilePath() . '/' . nr2char(in)
+    let rootPath = s:GetRootPathsList()[in - 97]
+
+    if (filereadable(rootPathFiles))
+      let lines = readfile(rootPathFiles)
       let i = 0
       while i < len(lines) && len(lines[i])
         echo nr2char(i + 97) . ' ' . lines[i]
         let i += 1
       endwhile
-      let in = getchar()
+      let in = s:EscapableIn()
 
-      if nr2char(in) == "\e"
-        return
-      endif
-      silent exec 'find ' .  lines[26] . lines[in - 97]
+      silent exec 'find ' .  rootPath . '/' . lines[in - 97]
 
-      
       "make sure that all files in directory actually saved
       let files = s:GetFileList()
-
       for dirFile in files
         let notFound = 1
         for savedFile in lines
           if dirFile == savedFile 
             let notFound = 0
-            echo dirFile . " " . savedFile
             break
           endif
         endfor
@@ -140,12 +140,27 @@ function! s:GetFileList()
   return files
 endfunction
 
+function! s:GetRootPathsList()
+  return readfile(s:GetMarksFilePath() . '/vim_marks_overhaul_root_paths')
+endfunction
+
 function! s:CustomMark()
   "get current directory
   let pwd = getcwd()
-  let in = getchar()
+  let in = s:EscapableIn()
   if 97 <= in && in <= 122 
     let path = s:GetMarksFilePath() . "/" . nr2char(in)
+
+
+    let rootpaths = s:GetRootPathsList()
+    let i = 0
+    while i < 26
+      if rootpaths[i] == getcwd()
+        echo "Directory already marked with " . nr2char(i + 97)
+        return
+      endif
+      let i += 1
+    endwhile
     if filereadable(path)
       echo "Some directory already marked with " . nr2char(in) . ". Override (y/n)?"
       let yesno = getchar()
@@ -156,13 +171,14 @@ function! s:CustomMark()
     endif
     silent exec '!touch ' . path
 
+    let rootpaths[in - 97] = getcwd()
+
     let files = s:GetFileList()
     while len(files) < 26
       call add(files, '')
     endwhile
 
-    "append cwd in the bottom to allow absolute jumps
-    call add(files, getcwd() . '/')
+    call writefile(rootpaths, s:GetMarksFilePath() . '/vim_marks_overhaul_root_paths')
     call writefile(files, path)
   endif
 endfunction
