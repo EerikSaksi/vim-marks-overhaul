@@ -1,17 +1,19 @@
-" Vim Marks overhaul
-" Maintainer:   Eerik Saksi 
-" Version:      0.2
+" bujo.vim - A minimalist todo list manager
+" Maintainer:   Eerik Saksi <eeriksak.si/>
+" Version:      0.1
 
 " Get custom configs
 let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
+let g:vim_marks_overhaul#use_globals = get(g:, "vim_marks_overhaul#use_globals", 1)
 
-" Make vim marks directory if it doesn't exist
+
+
+" Make bujo directory if it doesn't exist"
 if empty(glob(g:vim_marks_overhaul#marks_file_path))
   call mkdir(g:vim_marks_overhaul#marks_file_path)
 endif
 
-"save last used git repo
-if !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
+if !g:vim_marks_overhaul#use_globals && !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
   silent exec '!touch ' . g:vim_marks_overhaul#marks_file_path . '/last_used'
 endif
 
@@ -20,6 +22,7 @@ endif
 " command. This command outputs true to the shell if so, and a STDERR message 
 " otherwise.
 "
+" Used to 
 function s:InGitRepository()
   :silent let bool = system("git rev-parse --is-inside-work-tree")
 
@@ -27,7 +30,7 @@ function s:InGitRepository()
   " if we are in a repository. So, we split off those characters
   " and just check the first word.
   if split(bool, '\v\n')[0] == 'true'
-   return 1
+    return 1
   endif
 endfunction
 
@@ -37,7 +40,11 @@ function s:GetToplevelFolder()
   let absolute_path = system("git rev-parse --show-toplevel")
   let repo_name = split(absolute_path, "/")
   let repo_name_clean = split(repo_name[-1], '\v\n')[0]
-  call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . '/last_used')
+
+  "if not using globals write the last used mark file
+  if !g:vim_marks_overhaul#use_globals
+    call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . '/last_used')
+  endif
   return repo_name_clean
 endfunction
 
@@ -52,139 +59,97 @@ function s:GetMarksFilePath()
   "use git repo marks
   if s:InGitRepository()
     let repo_name = s:GetToplevelFolder()
-  else
-    let repo_name = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
+    let marksFile = g:vim_marks_overhaul#marks_file_path . "/" . repo_name 
+  else 
+    "otherwise use globals 
+    if g:vim_marks_overhaul#use_globals
+      let marksFile = g:vim_marks_overhaul#marks_file_path . "/global_marks"
+    "if don't use globals then  
+    else
+      let gitRepo = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
+      let marksFile = g:vim_marks_overhaul#marks_file_path . '/' . gitRepo
+    endif
   endif
-  let marksDir = g:vim_marks_overhaul#marks_file_path . '/' . repo_name
-  if !isdirectory(marksDir)
+  if !filereadable(marksFile)
     " init empty marks file
-    silent exec '!mkdir ' . marksDir
     let i = 0
     let lines = []
-    while i < 26
+    while i < 79
       let lines = add(lines, '')
       let i += 1
     endwhile
-    call writefile(lines, marksDir . '/vim_marks_overhaul_root_paths')
+    silent exec '!touch ' . marksFile
+    call writefile(lines, marksFile)
   endif
-  return marksDir
+  return marksFile
 endfunction
 
-function! s:EscapableIn()
+function! s:CustomJumpMark()
+  "if nerdtree open close so you don't open file in small nerd tree window
+  if exists("g:NERDTree") && g:NERDTree.IsOpen()
+    :NERDTreeToggle 
+  endif
+
+  let lines = readfile(s:GetMarksFilePath())
+
+  "get the filename of the current file
+  let fileName = ""
+  redir => fileName 
+    silent! echo expand('%:p')
+  redir end
+
   let in = getchar()
   "undo
   if nr2char(in) == "\e"
     return
   endif
-  return in
-endfunction
-
-function! s:CustomJumpMark()
-  "if nerdtree open close it so you don't open file in small nerd tree window
-  if exists("g:NERDTree") && g:NERDTree.IsOpen()
-    :NERDTreeToggle 
-  endif
-  let in = s:EscapableIn()
-  if 97 <= in && in <= 122 
-    "first we find the jump file which was requested
-    let rootPathFiles = s:GetMarksFilePath() . '/' . nr2char(in)
-    let rootPath = s:GetRootPathsList()[in - 97]
-
-    if (filereadable(rootPathFiles))
-      let lines = readfile(rootPathFiles)
-      let i = 0
-      while i < len(lines) && len(lines[i])
-        echo nr2char(i + 97) . ' ' . lines[i]
-        let i += 1
-      endwhile
-      let in = s:EscapableIn()
-
-      silent exec 'find ' .  rootPath . '/' . lines[in - 97]
-
-      "make sure that all files in directory actually saved
-      let files = s:GetFileList()
-      for dirFile in files
-        let notFound = 1
-        for savedFile in lines
-          if dirFile == savedFile 
-            let notFound = 0
-            break
-          endif
-        endfor
-        if notFound 
-          let lines[i] = dirFile
-          let i+=1
-        endif
-      endfor
-      redraw
-    endif
+  if 65 < in || in < 122 
+    execute 'cd ' . lines[in - 65]
+    execute ':Files'  
   endif
 endfunction
 
-
-function! s:GetFileList()
-  let files = []
-  redir => files
-    :silent echo globpath('.', '*')
-  redir end
-  let files = split(files, '\n')
-  let i = 0
-  while i < len(files) 
-    if isdirectory(files[i])
-      call remove(files, i)
-    else
-      let files[i] = files[i][2:]
-      let i += 1
-    endif
-  endwhile
-  return files
-endfunction
-
-function! s:GetRootPathsList()
-  return readfile(s:GetMarksFilePath() . '/vim_marks_overhaul_root_paths')
-endfunction
 
 function! s:CustomMark()
-  "get current directory
-  let pwd = getcwd()
-  let in = s:EscapableIn()
-  if 97 <= in && in <= 122 
-    let path = s:GetMarksFilePath() . "/" . nr2char(in)
+  "in stores the mark we want to use
+  let filePath = getcwd()
 
-
-    let rootpaths = s:GetRootPathsList()
-    let i = 0
-    while i < 26
-      if rootpaths[i] == getcwd()
-        echo "Directory already marked with " . nr2char(i + 97)
-        return
+  let lines = readfile(s:GetMarksFilePath())
+  let in = getchar()
+  if 65 < in || in < 122 
+    let lines = readfile(s:GetMarksFilePath())
+    if strlen(lines[in - 65]) != 0
+      echo lines[in - 65] . ' already occupies this mark. Override? (y/n)' 
+      let option = getchar()
+      if nr2char(option) == 'y'
+        let lines[in - 65] = filePath
+        call writefile(lines, s:GetMarksFilePath())
       endif
-      let i += 1
-    endwhile
-    if filereadable(path)
-      echo "Some directory already marked with " . nr2char(in) . ". Override (y/n)?"
-      let yesno = getchar()
-      if yesno != 121
-        return
-      endif
-      silent exec '!rm ' . path
+      return
     endif
-    silent exec '!touch ' . path
 
-    let rootpaths[in - 97] = getcwd()
-
-    let files = s:GetFileList()
-    while len(files) < 26
-      call add(files, '')
+    "find if this file is already refered to
+    let i = 0
+    while i < 57
+      if lines[i] == filePath 
+        echo nr2char(i + 65) . " already refers to this file. Override? (y/n)"
+        let option = getchar()
+        if nr2char(option) == 'y'
+          let lines[i] = ""
+        else
+          return
+        endif
+      endif
+      let i+=1
     endwhile
-
-    call writefile(rootpaths, s:GetMarksFilePath() . '/vim_marks_overhaul_root_paths')
-    call writefile(files, path)
+    let lines[in - 65] = filePath
+    call writefile(lines, s:GetMarksFilePath())
   endif
 endfunction
 
+
 if !exists(":OverhaulJump")
- command -nargs=? OverhaulJump :call s:CustomJumpMark()
+  command -nargs=? OverhaulJump :call s:CustomJumpMark()
 endif
 if !exists(":OverhaulMark")
   command -nargs=? OverhaulMark :call s:CustomMark()
