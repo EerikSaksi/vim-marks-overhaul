@@ -104,8 +104,8 @@ function! s:CustomJumpMark()
     return
   endif
   if 65 < in || in < 122 
-    execute 'cd ' . lines[in - 65]
-    execute ':Files'  
+    execute ':e ' . lines[in - 65] 
+    execute 'normal j'
   endif
 endfunction
 
