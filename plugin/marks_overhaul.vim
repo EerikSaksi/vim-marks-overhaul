@@ -89,7 +89,6 @@ function! s:CustomJumpMark()
   if exists("g:NERDTree") && g:NERDTree.IsOpen()
     :NERDTreeToggle 
   endif
-
   let lines = readfile(s:GetMarksFilePath())
 
   "get the filename of the current file
@@ -103,11 +102,12 @@ function! s:CustomJumpMark()
   if nr2char(in) == "\e"
     return
   endif
-  if 65 < in || in < 122 
-    execute ':e ' . lines[in - 65] 
-    execute 'normal j'
+  if 65 < in || in < 122 && lines[in - 65] != ''
+    execute 'CocCommand explorer ' . lines[in - 65] . ' --position floating'
   endif
 endfunction
+
+
 
 
 function! s:CustomMark()
@@ -146,7 +146,6 @@ function! s:CustomMark()
     call writefile(lines, s:GetMarksFilePath())
   endif
 endfunction
-
 
 if !exists(":OverhaulJump")
   command -nargs=? OverhaulJump :call s:CustomJumpMark()
