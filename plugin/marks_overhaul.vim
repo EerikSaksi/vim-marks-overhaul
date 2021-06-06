@@ -4,7 +4,6 @@
 
 " Get custom configs
 let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
-let g:vim_marks_overhaul#use_globals = get(g:, "vim_marks_overhaul#use_globals", 1)
 
 
 
@@ -13,7 +12,7 @@ if empty(glob(g:vim_marks_overhaul#marks_file_path))
   call mkdir(g:vim_marks_overhaul#marks_file_path)
 endif
 
-if !g:vim_marks_overhaul#use_globals && !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
+if !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
   silent exec '!touch ' . g:vim_marks_overhaul#marks_file_path . '/last_used'
 endif
 
@@ -42,9 +41,7 @@ function s:GetToplevelFolder()
   let repo_name_clean = split(repo_name[-1], '\v\n')[0]
 
   "if not using globals write the last used mark file
-  if !g:vim_marks_overhaul#use_globals
-    call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . '/last_used')
-  endif
+  call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . '/last_used')
   return repo_name_clean
 endfunction
 
@@ -61,14 +58,8 @@ function s:GetMarksFilePath()
     let repo_name = s:GetToplevelFolder()
     let marksFile = g:vim_marks_overhaul#marks_file_path . "/" . repo_name 
   else 
-    "otherwise use globals 
-    if g:vim_marks_overhaul#use_globals
-      let marksFile = g:vim_marks_overhaul#marks_file_path . "/global_marks"
-    "if don't use globals then  
-    else
-      let gitRepo = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
-      let marksFile = g:vim_marks_overhaul#marks_file_path . '/' . gitRepo
-    endif
+    let gitRepo = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
+    let marksFile = g:vim_marks_overhaul#marks_file_path . '/' . gitRepo
   endif
   if !filereadable(marksFile)
     " init empty marks file
@@ -103,7 +94,14 @@ function! s:CustomJumpMark()
     return
   endif
   if 65 < in || in < 122 && lines[in - 65] != ''
-    execute 'CocCommand explorer ' . lines[in - 65] . ' --position floating'
+    "by default CocCommand opens the directory and not inside the folder, so
+    "we ls the files inside and jump to the first one
+    let files = ""
+    redir => files
+      silent! exe '!ls ' . lines[in - 65]
+    redir end
+    let firstFile = split(files, "\n")[-1]
+    execute 'CocCommand explorer --position floating --root-strategies reveal --reveal ' . lines[in - 65] . '/' . firstFile
   endif
 endfunction
 
