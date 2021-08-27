@@ -93,15 +93,20 @@ function! s:CustomJumpMark()
   if nr2char(in) == "\e"
     return
   endif
-  if 65 < in || in < 122 && lines[in - 65] != ''
+  if lines[in - 65] != ''
     "by default CocCommand opens the directory and not inside the folder, so
     "we ls the files inside and jump to the first one
     let files = ""
+
+
+    echo 'ls -p ' . lines[in - 65] . ' | grep -v /'  
     redir => files
-      silent! exe '!ls ' . lines[in - 65]
+      silent! exe '!ls -p ' . lines[in - 65] . ' | grep -v /'  
     redir end
-    let firstFile = split(files, "\n")[-1]
+    let firstFile = sort(split(files, "\n"))[-1]
     execute 'CocCommand explorer --position floating --root-strategies reveal --reveal ' . lines[in - 65] . '/' . firstFile
+  else
+    echo "No such mark"
   endif
 endfunction
 
