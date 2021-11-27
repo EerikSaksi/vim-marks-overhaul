@@ -75,11 +75,7 @@ function s:GetMarksFilePath()
   return marksFile
 endfunction
 
-function! s:CustomJumpMark()
-  "if nerdtree open close so you don't open file in small nerd tree window
-  if exists("g:NERDTree") && g:NERDTree.IsOpen()
-    :NERDTreeToggle 
-  endif
+function! s:CustomJumpMark(from_terminal)
   let lines = readfile(s:GetMarksFilePath())
 
   "get the filename of the current file
@@ -99,12 +95,15 @@ function! s:CustomJumpMark()
     let files = ""
 
 
-    echo 'ls -p ' . lines[in - 65] . ' | grep -v /'  
     redir => files
       silent! exe '!ls -p ' . lines[in - 65] . ' | grep -v /'  
     redir end
     let firstFile = sort(split(files, "\n"))[-1]
-    execute 'CocCommand explorer --position floating --root-strategies reveal --reveal ' . lines[in - 65] . '/' . firstFile
+		if a:from_terminal
+      execute 'e ' . lines[in - 65] . '/' . firstFile
+		else
+			execute 'CocCommand explorer --position floating --root-strategies reveal --reveal ' . lines[in - 65] . '/' . firstFile
+		endif
   else
     echo "No such mark"
   endif
@@ -151,7 +150,10 @@ function! s:CustomMark()
 endfunction
 
 if !exists(":OverhaulJump")
-  command -nargs=? OverhaulJump :call s:CustomJumpMark()
+  command -nargs=? OverhaulJump :call s:CustomJumpMark(0)
+endif
+if !exists(":OverhaulJumpFromTerminal")
+  command -nargs=? OverhaulJumpFromTerminal :call s:CustomJumpMark(1)
 endif
 if !exists(":OverhaulMark")
   command -nargs=? OverhaulMark :call s:CustomMark()
