@@ -89,21 +89,15 @@ function! s:CustomJumpMark(from_terminal)
   if nr2char(in) == "\e"
     return
   endif
+
+	let filePathLen = len(lines[in - 65])
   if lines[in - 65] != ''
-    "by default CocCommand opens the directory and not inside the folder, so
-    "we ls the files inside and jump to the first one
-    let files = ""
-
-
-    redir => files
-      silent! exe '!ls -p ' . lines[in - 65] . ' | grep -v /'  
-    redir end
-    let firstFile = sort(split(files, "\n"))[-1]
-		if a:from_terminal
-      execute 'e ' . lines[in - 65] . '/' . firstFile
-		else
-			execute 'CocCommand explorer --position floating --root-strategies reveal --reveal ' . lines[in - 65] . '/' . firstFile
-		endif
+		for file in MruGetFiles(lines[in - 65]) 
+			let relativeFilePath = split(file[filePathLen:], '/')
+			if len(relativeFilePath) < 2 
+				execute 'e ' . lines[in - 65] . '/' . relativeFilePath[0]
+			endif
+		endfor
   else
     echo "No such mark"
   endif
