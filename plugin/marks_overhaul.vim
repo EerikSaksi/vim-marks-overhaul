@@ -96,6 +96,7 @@ function! s:CustomJumpMark(from_terminal)
 			let relativeFilePath = split(file[filePathLen:], '/')
 			if len(relativeFilePath) < 2 
 				execute 'e ' . lines[in - 65] . '/' . relativeFilePath[0]
+				return
 			endif
 		endfor
   else
