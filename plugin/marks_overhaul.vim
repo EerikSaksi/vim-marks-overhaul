@@ -92,10 +92,11 @@ function! s:CustomJumpMark(from_terminal)
 
 	let filePathLen = len(lines[in - 65])
   if lines[in - 65] != ''
-		for file in MruGetFiles(lines[in - 65]) 
+		for file in MruGetFiles(lines[in - 65] . '/') 
 			let relativeFilePath = split(file[filePathLen:], '/')
 			if len(relativeFilePath) < 2 
 				execute 'e ' . lines[in - 65] . '/' . relativeFilePath[0]
+				echo lines[in - 65] . '/' . relativeFilePath[0]
 				return
 			endif
 		endfor
