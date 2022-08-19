@@ -4,10 +4,9 @@
 
 " Get custom configs
 let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
+let g:buffer_visited_with_marks = 0
 
-
-
-" Make bujo directory if it doesn't exist"
+" Make directory if it doesn't exist"
 if empty(glob(g:vim_marks_overhaul#marks_file_path))
   call mkdir(g:vim_marks_overhaul#marks_file_path)
 endif
@@ -90,13 +89,17 @@ function! s:CustomJumpMark(from_terminal)
     return
   endif
 
-	let filePathLen = len(lines[in - 65])
-  if lines[in - 65] != ''
-		for file in MruGetFiles(lines[in - 65] . '/') 
+	let mark = in - 65
+	let filePathLen = len(lines[mark])
+  if lines[mark] != ''
+		for file in MruGetFiles(lines[mark] . '/') 
+			"find file which is in this directory
 			let relativeFilePath = split(file[filePathLen:], '/')
 			if len(relativeFilePath) < 2 
-				execute 'e ' . lines[in - 65] . '/' . relativeFilePath[0]
-				echo lines[in - 65] . '/' . relativeFilePath[0]
+				"we visited this mark with the marks plugin
+				let g:buffer_visited_with_marks = 1
+				execute 'e ' . lines[mark] . '/' . relativeFilePath[0]
+				echo lines[mark] . '/' . relativeFilePath[0]
 				return
 			endif
 		endfor
@@ -106,7 +109,24 @@ function! s:CustomJumpMark(from_terminal)
 endfunction
 
 
+function! s:MarkReminder()
+	if !g:buffer_visited_with_marks
+		let dir = getcwd()
+		let lines = readfile(s:GetMarksFilePath())
 
+    let i = 0
+		for line in lines
+			if dir == line
+				redraw
+				echo "Use mark " . nr2char(i + 65)
+				return
+			endif
+			let i += 1
+		endfor
+	endif
+	let g:buffer_visited_with_marks = 0
+endfunction
+autocmd BufWritePost * :call s:MarkReminder()
 
 function! s:CustomMark()
   "in stores the mark we want to use
