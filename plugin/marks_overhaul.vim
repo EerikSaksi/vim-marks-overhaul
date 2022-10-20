@@ -92,16 +92,20 @@ function! s:CustomJumpMark(from_terminal)
 	let mark = in - 65
 	let filePathLen = len(lines[mark])
   if lines[mark] != ''
-		for file in MruGetFiles(lines[mark] . '/') 
-			"find file which is in this directory
-			let relativeFilePath = split(file[filePathLen:], '/')
-			if len(relativeFilePath) < 2 
-				"we visited this mark with the marks plugin
-				let g:buffer_visited_with_marks = 1
-				execute 'e ' . lines[mark] . '/' . relativeFilePath[0]
-				echo lines[mark] . '/' . relativeFilePath[0]
-				return
+		for file in MruGetFiles() 
+			let relativeFilePath = split(file, lines[mark])
+			if len(relativeFilePath) 
+				let numSlashes = len(split(relativeFilePath[0], '/'))
+
+				if numSlashes < 2 
+					"we visited this mark with the marks plugin
+					let g:buffer_visited_with_marks = 1
+					execute 'e ' . lines[mark] . '/' . relativeFilePath[0]
+					echo lines[mark] . relativeFilePath[0]
+					return
+				endif
 			endif
+
 		endfor
   else
     echo "No such mark"
