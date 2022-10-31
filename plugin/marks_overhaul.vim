@@ -102,6 +102,7 @@ function! s:CustomJumpMark(from_terminal)
 					let g:buffer_visited_with_marks = 1
 					execute 'e ' . lines[mark] . '/' . relativeFilePath[0]
 					echo lines[mark] . relativeFilePath[0]
+					
 					return
 				endif
 			endif
