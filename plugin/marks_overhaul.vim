@@ -100,13 +100,16 @@ function! s:CustomJumpMark(from_terminal)
 				if numSlashes < 2 
 					"we visited this mark with the marks plugin
 					let g:buffer_visited_with_marks = 1
-					execute 'e ' . lines[mark] . '/' . relativeFilePath[0]
-					echo lines[mark] . relativeFilePath[0]
-					
+
+					if exists('g:vscode')
+						call VSCodeExtensionNotify('open-file', lines[mark] . '/' . relativeFilePath[0])
+					else
+						execute 'e ' . lines[mark] . '/' . relativeFilePath[0]
+					endif
+
 					return
 				endif
 			endif
-
 		endfor
   else
     echo "No such mark"
