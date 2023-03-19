@@ -17,7 +17,7 @@ if empty(glob(g:vim_marks_overhaul#marks_file_path))
 endif
 
 if !filereadable(g:vim_marks_overhaul#marks_file_path . g:s . "last_used")
-  silent exec "!touch " . g:vim_marks_overhaul#marks_file_path . g:s . "last_used"
+  call writefile([""], g:vim_marks_overhaul#marks_file_path . g:s . "last_used")
 endif
 
 " InGitRepository() tells us if the directory we are currently working in
