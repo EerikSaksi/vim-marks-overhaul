@@ -5,9 +5,9 @@ if has("win32") || has("win64")
 endif
 
 if has("win32") || has("win64")
-	let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
-else
 	let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "\\Documents\\vim-marks-overhaul")
+else
+	let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
 endif
 let g:buffer_visited_with_marks = 0
 
