@@ -1,9 +1,11 @@
-" bujo.vim - A minimalist todo list manager
-" Maintainer:   Eerik Saksi <eeriksak.si/>
-" Version:      0.1
+" slash
+let g:s = '/'
+if has("win32") || has("win64")
+	let g:s = "\\"
+endif
 
 " Get custom configs
-let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
+let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . g:s . ".cache" . g:s . "vim-marks-overhaul")
 let g:buffer_visited_with_marks = 0
 
 " Make directory if it doesn't exist"
@@ -11,12 +13,12 @@ if empty(glob(g:vim_marks_overhaul#marks_file_path))
   call mkdir(g:vim_marks_overhaul#marks_file_path)
 endif
 
-if !filereadable(g:vim_marks_overhaul#marks_file_path . '/last_used')
-  silent exec '!touch ' . g:vim_marks_overhaul#marks_file_path . '/last_used'
+if !filereadable(g:vim_marks_overhaul#marks_file_path . g:s . "last_used")
+  silent exec "!touch " . g:vim_marks_overhaul#marks_file_path . g:s . "last_used"
 endif
 
 " InGitRepository() tells us if the directory we are currently working in
-" is a git repository. It makes use of the 'git rev-parse --is-inside-work-tree'
+" is a git repository. It makes use of the "git rev-parse --is-inside-work-tree"
 " command. This command outputs true to the shell if so, and a STDERR message 
 " otherwise.
 "
@@ -27,7 +29,7 @@ function s:InGitRepository()
   " The git function will return true with some leading characters
   " if we are in a repository. So, we split off those characters
   " and just check the first word.
-  if split(bool, '\v\n')[0] == 'true'
+  if split(bool, "\v\n")[0] == "true"
     return 1
   endif
 endfunction
@@ -36,13 +38,14 @@ endfunction
 " currently working in
 function s:GetToplevelFolder()
   let absolute_path = system("git rev-parse --show-toplevel")
-  let repo_name = split(absolute_path, "/")
-  let repo_name_clean = split(repo_name[-1], '\v\n')[0]
+  let repo_name = split(absolute_path, g:s)
+  let repo_name_clean = split(repo_name[-1], "\v\n")[0]
 
   "if not using globals write the last used mark file
-  call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . '/last_used')
+  call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . g:s . "last_used")
   return repo_name_clean
 endfunction
+
 
 
 " GetMarksFilePath() returns which file path we will be using. If we are in a
@@ -55,20 +58,20 @@ function s:GetMarksFilePath()
   "use git repo marks
   if s:InGitRepository()
     let repo_name = s:GetToplevelFolder()
-    let marksFile = g:vim_marks_overhaul#marks_file_path . "/" . repo_name 
+    let marksFile = g:vim_marks_overhaul#marks_file_path . g:s . repo_name 
   else 
-    let gitRepo = readfile(g:vim_marks_overhaul#marks_file_path . '/last_used')[0]
-    let marksFile = g:vim_marks_overhaul#marks_file_path . '/' . gitRepo
+    let gitRepo = readfile(g:vim_marks_overhaul#marks_file_path . g:s . "last_used")[0]
+    let marksFile = g:vim_marks_overhaul#marks_file_path . g:s . gitRepo
   endif
   if !filereadable(marksFile)
     " init empty marks file
     let i = 0
     let lines = []
     while i < 79
-      let lines = add(lines, '')
+      let lines = add(lines, "")
       let i += 1
     endwhile
-    silent exec '!touch ' . marksFile
+    silent exec "!touch " . marksFile
     call writefile(lines, marksFile)
   endif
   return marksFile
@@ -80,7 +83,7 @@ function! s:CustomJumpMark(from_terminal)
   "get the filename of the current file
   let fileName = ""
   redir => fileName 
-    silent! echo expand('%:p')
+    silent! echo expand("%:p")
   redir end
 
   let in = getchar()
@@ -91,20 +94,20 @@ function! s:CustomJumpMark(from_terminal)
 
 	let mark = in - 65
 	let filePathLen = len(lines[mark])
-  if lines[mark] != ''
+  if lines[mark] != ""
 		for file in MruGetFiles() 
 			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath) 
-				let numSlashes = len(split(relativeFilePath[0], '/'))
+				let numSlashes = len(split(relativeFilePath[0], g:s))
 
 				if numSlashes < 2 
 					"we visited this mark with the marks plugin
 					let g:buffer_visited_with_marks = 1
 
-					if exists('g:vscode')
-						call VSCodeExtensionNotify('open-file', lines[mark] . '/' . relativeFilePath[0])
+					if exists("g:vscode")
+						call VSCodeExtensionNotify("open-file", lines[mark] . g:s . relativeFilePath[0])
 					else
-						execute 'e ' . lines[mark] . '/' . relativeFilePath[0]
+						execute "e " . lines[mark] . g:s .  relativeFilePath[0]
 					endif
 
 					return
@@ -147,7 +150,7 @@ function! s:CustomMark()
     if strlen(lines[in - 65]) != 0
       echo lines[in - 65] . ' already occupies this mark. Override? (y/n)' 
       let option = getchar()
-      if nr2char(option) == 'y'
+      if nr2char(option) == "y"
         let lines[in - 65] = filePath
         call writefile(lines, s:GetMarksFilePath())
       endif
@@ -160,7 +163,7 @@ function! s:CustomMark()
       if lines[i] == filePath 
         echo nr2char(i + 65) . " already refers to this file. Override? (y/n)"
         let option = getchar()
-        if nr2char(option) == 'y'
+        if nr2char(option) == "y"
           let lines[i] = ""
         else
           return
