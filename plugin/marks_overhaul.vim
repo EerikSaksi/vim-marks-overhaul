@@ -4,8 +4,11 @@ if has("win32") || has("win64")
 	let g:s = "\\"
 endif
 
-" Get custom configs
-let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . g:s . ".cache" . g:s . "vim-marks-overhaul")
+if has("win32") || has("win64")
+	let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "/.cache/vim-marks-overhaul")
+else
+	let g:vim_marks_overhaul#marks_file_path = get(g:, "vim_marks_overhaul#marks_file_path", $HOME . "\\Documents\\vim-marks-overhaul")
+endif
 let g:buffer_visited_with_marks = 0
 
 " Make directory if it doesn't exist"
