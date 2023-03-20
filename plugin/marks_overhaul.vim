@@ -100,7 +100,7 @@ function! s:CustomJumpMark(from_terminal)
 	let filePathLen = len(lines[mark])
   if lines[mark] != ""
 		for file in MruGetFiles() 
-			let relativeFilePath = split(file, lines[mark])
+			let relativeFilePath = split(trim(file), trim(lines[mark]))
 			if len(relativeFilePath) 
 				echo 'file ' .file
 				echo 'relativeFilePath' . relativeFilePath[0]
