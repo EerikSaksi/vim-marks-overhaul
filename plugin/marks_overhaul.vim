@@ -32,7 +32,7 @@ function s:InGitRepository()
   " The git function will return true with some leading characters
   " if we are in a repository. So, we split off those characters
   " and just check the first word.
-  if split(bool, "\v\n")[0] == "true"
+  if split(bool, '\v\n')[0] == "true"
     return 1
   endif
 endfunction
@@ -42,7 +42,7 @@ endfunction
 function s:GetToplevelFolder()
   let absolute_path = system("git rev-parse --show-toplevel")
   let repo_name = split(absolute_path, g:s)
-  let repo_name_clean = split(repo_name[-1], "\v\n")[0]
+  let repo_name_clean = split(repo_name[-1], '\v\n')[0]
 
   "if not using globals write the last used mark file
   call writefile([repo_name_clean], g:vim_marks_overhaul#marks_file_path . g:s . "last_used")
