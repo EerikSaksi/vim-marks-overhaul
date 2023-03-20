@@ -41,7 +41,7 @@ endfunction
 " currently working in
 function s:GetToplevelFolder()
   let absolute_path = system("git rev-parse --show-toplevel")
-  let repo_name = split(absolute_path, g:s)
+  let repo_name = split(absolute_path, '/')
   let repo_name_clean = split(repo_name[-1], '\v\n')[0]
 
   "if not using globals write the last used mark file
