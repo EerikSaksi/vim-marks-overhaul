@@ -99,26 +99,23 @@ function! s:CustomJumpMark(from_terminal)
 	let filePathLen = len(lines[mark])
   if lines[mark] != ""
 		for file in MruGetFiles() 
-			if has("win32") || has("win64")
-				let file = file[0:len(file) - 1]
-			endif
-			let relativeFilePath = split(file, lines[mark])
-			if len(relativeFilePath)
-				let numSlashes = len(split(relativeFilePath[0], g:s))
-				echo relativeFilePath
+			let i = 0
+			while lines[mark][i] == file[i]
+				let i = i + 1
+			endwhile
+			let numSlashes = len(split(file[i:len(file)], g:s))
+			if i == len(lines[mark]) && numSlashes < 2 
+				"we visited this mark with the marks plugin
+				let g:buffer_visited_with_marks = 1
 
-				if numSlashes < 2 
-					"we visited this mark with the marks plugin
-					let g:buffer_visited_with_marks = 1
-
-					if exists("g:vscode")
-						call VSCodeExtensionNotify("open-file", lines[mark] . g:s . relativeFilePath[0])
-					else
-						execute "e " . lines[mark] . g:s .  relativeFilePath[0]
-					endif
-
-					return
+				if exists("g:vscode")
+					call VSCodeExtensionNotify("open-file", file)
+				else
+					echo "e " . file
+					execute "e " . file
 				endif
+
+				return
 			endif
 		endfor
   else
