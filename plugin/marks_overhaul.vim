@@ -99,7 +99,9 @@ function! s:CustomJumpMark(from_terminal)
 	let filePathLen = len(lines[mark])
   if lines[mark] != ""
 		for file in MruGetFiles() 
-			let file = file[1: len(file) - 1]
+			if has("win32") || has("win64")
+				let file = file[1:len(file) - 1]
+			endif
 			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath)
 				let numSlashes = len(split(relativeFilePath[0], g:s))
