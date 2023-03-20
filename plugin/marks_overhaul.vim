@@ -103,7 +103,7 @@ function! s:CustomJumpMark(from_terminal)
 			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath) 
 				echo 'file ' .file
-				echo 'relativeFilePath' . relativeFilePath
+				echo 'relativeFilePath' . relativeFilePath[0]
 				let numSlashes = len(split(relativeFilePath[0], g:s))
 
 				if numSlashes < 2 
