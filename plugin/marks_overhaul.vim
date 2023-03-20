@@ -82,7 +82,6 @@ endfunction
 
 function! s:CustomJumpMark(from_terminal)
   let lines = readfile(s:GetMarksFilePath())
-	echo s:GetToplevelFolder()
 
   "get the filename of the current file
   let fileName = ""
@@ -100,9 +99,9 @@ function! s:CustomJumpMark(from_terminal)
 	let filePathLen = len(lines[mark])
   if lines[mark] != ""
 		for file in MruGetFiles() 
+			let file = file[1: len(file) - 1]
 			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath)
-				echo relativeFilePath[0] == file
 				let numSlashes = len(split(relativeFilePath[0], g:s))
 
 				for chr in file
