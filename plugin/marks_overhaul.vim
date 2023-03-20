@@ -82,6 +82,7 @@ endfunction
 
 function! s:CustomJumpMark(from_terminal)
   let lines = readfile(s:GetMarksFilePath())
+	echo s:GetToplevelFolder()
 
   "get the filename of the current file
   let fileName = ""
