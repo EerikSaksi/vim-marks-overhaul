@@ -100,10 +100,10 @@ function! s:CustomJumpMark(from_terminal)
 	let filePathLen = len(lines[mark])
   if lines[mark] != ""
 		for file in MruGetFiles() 
-			let relativeFilePath = split(trim(file), trim(lines[mark]))
+			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath) 
-				echo 'file ' .file
-				echo 'relativeFilePath' . relativeFilePath[0]
+				echo 'file' . file . 'file'
+				echo 'relative' . relativeFilePath[0] . 'relative'
 				let numSlashes = len(split(relativeFilePath[0], g:s))
 
 				if numSlashes < 2 
