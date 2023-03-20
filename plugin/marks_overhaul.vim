@@ -100,17 +100,19 @@ function! s:CustomJumpMark(from_terminal)
   if lines[mark] != ""
 		for file in MruGetFiles() 
 			if has("win32") || has("win64")
-				let file = file[1:len(file) - 1]
+				let file = file[0:len(file) - 1]
 			endif
 			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath)
 				let numSlashes = len(split(relativeFilePath[0], g:s))
 
+				echo file
 				for chr in file
 					echo char2nr(chr)
 				endfor
 
 				echo "lines[mark]"
+				echo lines[mark]
 				for chr in lines[mark]
 					echo char2nr(chr)
 				endfor
