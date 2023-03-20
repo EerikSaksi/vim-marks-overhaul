@@ -102,13 +102,18 @@ function! s:CustomJumpMark(from_terminal)
 		for file in MruGetFiles() 
 			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath) 
-				echo 'rel' . relativeFilePath[0] . 'rel'
-				echo 'lin' . lines[mark] . 'lin'
 				echo relativeFilePath[0] == file
 				let numSlashes = len(split(relativeFilePath[0], g:s))
 
 				if numSlashes < 2 
-					echo 'numSlashes < 2' . file
+					for chr in file
+						echo char2nr(chr)
+					endfor
+
+					echo "lines[mark]"
+					for chr in lines[mark]
+						echo char2nr(chr)
+					endfor
 					"we visited this mark with the marks plugin
 					let g:buffer_visited_with_marks = 1
 
