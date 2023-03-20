@@ -102,8 +102,9 @@ function! s:CustomJumpMark(from_terminal)
 		for file in MruGetFiles() 
 			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath) 
-				echo 'file' . file . 'file'
-				echo 'relative' . relativeFilePath[0] . 'relative'
+				echo 'rel' . relativeFilePath[0] . 'rel'
+				echo 'lin' . lines[mark] . 'lin'
+				echo relativeFilePath[0] == file
 				let numSlashes = len(split(relativeFilePath[0], g:s))
 
 				if numSlashes < 2 
