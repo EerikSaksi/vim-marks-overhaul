@@ -105,17 +105,8 @@ function! s:CustomJumpMark(from_terminal)
 			let relativeFilePath = split(file, lines[mark])
 			if len(relativeFilePath)
 				let numSlashes = len(split(relativeFilePath[0], g:s))
+				echo relativeFilePath
 
-				echo file
-				for chr in file
-					echo char2nr(chr)
-				endfor
-
-				echo "lines[mark]"
-				echo lines[mark]
-				for chr in lines[mark]
-					echo char2nr(chr)
-				endfor
 				if numSlashes < 2 
 					"we visited this mark with the marks plugin
 					let g:buffer_visited_with_marks = 1
